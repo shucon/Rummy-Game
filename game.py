@@ -3,6 +3,7 @@
 import pygame, sys, os
 import random   #to select cards
 from pygame.locals import *
+import math
 
 # game initialization
 pygame.init()
@@ -23,6 +24,16 @@ for i in suitlist:
         allCards[str(j) +"_of_"+i] = 0
 opponent_cards = []
 player_cards = []
+open_deck = []
+flag = 0
+while flag == 0:
+    num = random.randint(1,13)
+    suit = suitlist[random.randint(0,3)]
+    card = str(num)+"_of_"+str(suit)
+    if allCards[card] == 0:    #   make sure card doesn't repeat
+        allCards[card] = 1
+        open_deck.append(card)
+        flag = 1
 
 for i in range(13):
     flag = 0
@@ -87,7 +98,16 @@ def add_card():
     tmp = pygame.transform.scale(tmp,(70,100))   #scale cards
     card_images.append(tmp)
     mouse_positions.append([-1,-1])
-    card_positions.append([18,490])
+    distance = 1045/len(player_cards)
+    z=15
+    card_positions.clear()
+    # Initialize card positions
+    mouse_positions.clear()
+    for i in player_cards:
+        card_positions.append([z,490])
+        mouse_positions.append([-1,-1])
+        z+=math.floor(distance)
+    closed_deck_flag = 0
 
 while True: # main game loop
     for event in pygame.event.get():
@@ -97,11 +117,10 @@ while True: # main game loop
     screen.blit(bckg, [0, 0])
     screen.blit(closed_deck, [100, 200])
     mouse_pos = pygame.mouse.get_pos()
-
     if (closed_deck_flag == 1 and pygame.mouse.get_pressed()[0] == 0):
         closed_deck_flag = 0
     if ((mouse_pos[0] > 100 and mouse_pos[0] < 170) and (mouse_pos[1] > 200 and mouse_pos[0] < 300)\
-                and pygame.mouse.get_pressed()[0] == 1):    #Left click
+                and pygame.mouse.get_pressed()[0] == 1 and closed_deck_flag == 0):    #Left click
         closed_deck_flag = 1
         add_card()
     # Update card positions
