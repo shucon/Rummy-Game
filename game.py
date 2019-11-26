@@ -13,61 +13,81 @@ os.environ['SDL_VIDEO_CENTERED'] = '1'
 screen = pygame.display.set_mode((1100, 600))
 pygame.display.set_caption('Rummy Game')
 
+card_images = []
 #generating random cards for player and computer
-player_card_names = []
-cardlist = []
+cardlist = [1,2,3,4,5,6,7,8,9,10,11,12,13]
 suitlist = ['spades', 'hearts', 'diamonds','clubs']
-for i in range(26):
-    bonus = 0
-    while bonus == 0:
+allCards = {}
+for i in suitlist:
+    for j in cardlist:
+        allCards[str(j) +"_of_"+i] = 0
+opponent_cards = []
+player_cards = []
+
+for i in range(13):
+    flag = 0
+    while flag == 0:
         num = random.randint(1,13)
         suit = suitlist[random.randint(0,3)]
-        card = str(num)+"_of_"+str(suit)+".png"
-        if card not in cardlist:    #   make sure card doesn't repeat
-            cardlist.append(card)
-            if len(player_card_names)<=12:
-                player_card_names.append(card)  #   append player card names for sort function
-            bonus = 1
+        card = str(num)+"_of_"+str(suit)
+        if allCards[card] == 0:    #   make sure card doesn't repeat
+            allCards[card] = 1
+            player_cards.append(card)
+            flag = 1
+
+for i in range(13):
+    flag = 0
+    while flag == 0:
+        num = random.randint(1,13)
+        suit = suitlist[random.randint(0,3)]
+        card = str(num)+"_of_"+str(suit)
+        if allCards[card] == 0:    #   make sure card doesn't repeat
+            allCards[card] = 1
+            opponent_cards.append(card)
+            flag = 1
 
 
 #   loading card images
-for i in range(26):
-    globals()['card%s'%i] = pygame.image.load(cardlist[i]).convert()
-    globals()['card%s'%i] = pygame.transform.scale(globals()['card%s'%i],(70,100))   #scale cards
-
-#   making player and computer sets
-player_cards = []
-computer_cards = []
-for i in range(13):
-    player_cards.append(globals()['card%s'%i])
-    computer_cards.append(globals()['card%s'%(i+13)])
+for i in player_cards:
+    tmp = pygame.image.load(i+".png").convert()
+    tmp = pygame.transform.scale(tmp,(70,100))   #scale cards
+    card_images.append(tmp)
 
 bckg = pygame.image.load("pic.jpg").convert()   #load background image
 bckg = pygame.transform.scale(bckg,(1100,600))  #scale background image
 
-# def sort():
-#     '''call this function when sort button is pressed'''
-#     clubs, hearts, spades, diamonds = {}, {}, {}, {}
+closed_deck = pygame.image.load("card_back.jpeg").convert()   #load background image
+closed_deck = pygame.transform.scale(closed_deck,(70,100))  #scale background image
 
-#     for i in range(13):
-#         if "clubs" in player_card_names[i]:
-#             clubs[i] = globals()['card%s'%i]
-#         elif "hearts" in player_card_names[i]:
-#             hearts[i] = globals()['card%s'%i]
-#         elif "spades" in player_card_names[i]:
-#             spades[i] = globals()['cards%s'%i]
-#         else:
-#             diamonds[i] = globals()['cards%s'%i]
-#     #sorted_list = [clubs,hearts,spades,diamonds]
-#     for i in suitlist:
-#         for key, value in sorted(i.items(), key=lambda kv: kv[1]):
-#         for value     
-#             #print("1 Euro = %s %s" % (value,key))
 
-#     pass
+FPS = 30
+fpsClock = pygame.time.Clock()
+z=15
+card_positions = []
+# Initialize card positions
+mouse_positions = []
+for i in player_cards:
+    card_positions.append([z,490])
+    mouse_positions.append([-1,-1])
+    z+=80
+closed_deck_flag = 0
 
-def discard():
-    pass
+def add_card():
+    flag = 0
+    card = ""
+    while flag == 0:
+        num = random.randint(1,13)
+        suit = suitlist[random.randint(0,3)]
+        card = str(num)+"_of_"+str(suit)
+        if allCards[card] == 0:    #   make sure card doesn't repeat
+            allCards[card] = 1
+            player_cards.append(card)
+            flag = 1
+    tmp = pygame.image.load(card+".png").convert()
+    tmp = pygame.transform.scale(tmp,(70,100))   #scale cards
+    card_images.append(tmp)
+    mouse_positions.append([-1,-1])
+    card_positions.append([18,490])
 
 while True: # main game loop
     for event in pygame.event.get():
@@ -75,12 +95,33 @@ while True: # main game loop
             pygame.quit()
             sys.exit()
     screen.blit(bckg, [0, 0])
+    screen.blit(closed_deck, [100, 200])
+    mouse_pos = pygame.mouse.get_pos()
 
-    z=15
-    for i in player_cards:
-        screen.blit(i,(z,490))
-        z+=80
-    z=15
+    if (closed_deck_flag == 1 and pygame.mouse.get_pressed()[0] == 0):
+        closed_deck_flag = 0
+    if ((mouse_pos[0] > 100 and mouse_pos[0] < 170) and (mouse_pos[1] > 200 and mouse_pos[0] < 300)\
+                and pygame.mouse.get_pressed()[0] == 1):    #Left click
+        closed_deck_flag = 1
+        add_card()
+    # Update card positions
+    for i in range(len(player_cards)):
+        # If mouse in card bound 
+        if ((mouse_pos[0] > card_positions[i][0] and mouse_pos[0] < card_positions[i][0]+70) and (mouse_pos[1] > card_positions[i][1] and mouse_pos[0] < card_positions[i][1]+100)\
+                and pygame.mouse.get_pressed()[0] == 1):    #Left click
+            if (mouse_positions[i] == [-1,-1]):
+                mouse_positions[i] = mouse_pos
+            else:
+                tmp = mouse_pos[0] - mouse_positions[i][0]
+                card_positions[i][0] += tmp
+                tmp = mouse_pos[1] - mouse_positions[i][1]
+                card_positions[i][1] += tmp
+                mouse_positions[i] = mouse_pos
+        
+        if (pygame.mouse.get_pressed()[0] == 0):
+            card_positions[i][1] = 490
 
+        screen.blit(card_images[i],card_positions[i])
 
     pygame.display.update()
+    fpsClock.tick(FPS)
