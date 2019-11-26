@@ -3,7 +3,7 @@
 import pygame, sys, os
 import random   #to select cards
 from pygame.locals import *
-import math
+import math, time
 
 # game initialization
 pygame.init()
@@ -68,8 +68,13 @@ bckg = pygame.image.load("pic.jpg").convert()   #load background image
 bckg = pygame.transform.scale(bckg,(1100,600))  #scale background image
 
 closed_deck = pygame.image.load("card_back.jpeg").convert()   #load background image
-closed_deck = pygame.transform.scale(closed_deck,(70,100))  #scale background image
+closed_deck = pygame.transform.scale(closed_deck,(70,100))  #scale background image'
 
+open_deck_img = pygame.image.load(open_deck[0]+".png").convert()   #load background image
+open_deck_img = pygame.transform.scale(open_deck_img,(70,100))  #scale background image
+
+finish_slot = pygame.image.load("joker.png").convert()   #load background image
+finish_slot = pygame.transform.scale(finish_slot,(70,100))  #scale background image
 
 FPS = 30
 fpsClock = pygame.time.Clock()
@@ -81,9 +86,8 @@ for i in player_cards:
     card_positions.append([z,490])
     mouse_positions.append([-1,-1])
     z+=80
-closed_deck_flag = 0
 
-def add_card():
+def add_card_closed_deck():
     flag = 0
     card = ""
     while flag == 0:
@@ -107,7 +111,33 @@ def add_card():
         card_positions.append([z,490])
         mouse_positions.append([-1,-1])
         z+=math.floor(distance)
-    closed_deck_flag = 0
+
+def add_card_open_deck():
+    global open_deck_img
+    card_images.append(open_deck_img)
+    player_cards.append(open_deck[-1])
+    open_deck.pop()
+    if (len(open_deck) == 0):
+        open_deck_img = pygame.image.load("joker.png").convert()   #load background image
+        open_deck_img = pygame.transform.scale(open_deck_img,(70,100))  #scale background image
+    else:
+        open_deck_img = pygame.image.load(open_deck[-1]+".png").convert()   #load background image
+        open_deck_img = pygame.transform.scale(open_deck_img,(70,100))  #scale background image
+    mouse_positions.append([-1,-1])
+    distance = 1045/len(player_cards)
+    z=15
+    card_positions.clear()
+    # Initialize card positions
+    mouse_positions.clear()
+    for i in player_cards:
+        card_positions.append([z,490])
+        mouse_positions.append([-1,-1])
+        z+=math.floor(distance)
+
+add_card_status = 0
+
+def cpu_play():
+    pass
 
 while True: # main game loop
     for event in pygame.event.get():
@@ -116,17 +146,45 @@ while True: # main game loop
             sys.exit()
     screen.blit(bckg, [0, 0])
     screen.blit(closed_deck, [100, 200])
+    screen.blit(open_deck_img, [500, 200])
+    screen.blit(finish_slot, [900, 200])
     mouse_pos = pygame.mouse.get_pos()
-    if (closed_deck_flag == 1 and pygame.mouse.get_pressed()[0] == 0):
-        closed_deck_flag = 0
-    if ((mouse_pos[0] > 100 and mouse_pos[0] < 170) and (mouse_pos[1] > 200 and mouse_pos[0] < 300)\
-                and pygame.mouse.get_pressed()[0] == 1 and closed_deck_flag == 0):    #Left click
+    
+    # Add card from closed deck
+    if ((mouse_pos[0] > 100 and mouse_pos[0] < 170) and (mouse_pos[1] > 200 and mouse_pos[1] < 300)\
+                and pygame.mouse.get_pressed()[0] == 1 and add_card_status == 0):    #Left click
         closed_deck_flag = 1
-        add_card()
+        add_card_closed_deck()
+        add_card_status = 1
+
+    # Add card from open deck
+    if ((mouse_pos[0] > 500 and mouse_pos[0] < 570) and (mouse_pos[1] > 200 and mouse_pos[1] < 300)\
+                and pygame.mouse.get_pressed()[0] == 1 and add_card_status == 0):    #Left click
+        add_card_open_deck()
+        add_card_status = 1
+    
+    # Delete card positions
+    if (add_card_status == 1 and pygame.mouse.get_pressed()[0] == 1):
+        for i in range(len(player_cards)):
+            # If mouse in card bound 
+            if ((mouse_pos[0] > card_positions[i][0] and mouse_pos[0] < card_positions[i][0]+70) and\
+                     (mouse_pos[1] > card_positions[i][1] and mouse_pos[1] < card_positions[i][1]+100)):    #Left click
+                add_card_status = 0
+                open_deck.append(player_cards[i])
+                del player_cards[i]
+                del card_positions[i]
+                del mouse_positions[i]
+                open_deck_img = card_images[i]
+                del card_images[i]
+                # CPU completes it's turn
+                time.sleep(5)
+                cpu_play()
+                break
+
     # Update card positions
     for i in range(len(player_cards)):
         # If mouse in card bound 
-        if ((mouse_pos[0] > card_positions[i][0] and mouse_pos[0] < card_positions[i][0]+70) and (mouse_pos[1] > card_positions[i][1] and mouse_pos[0] < card_positions[i][1]+100)\
+        if ((mouse_pos[0] > card_positions[i][0] and mouse_pos[0] < card_positions[i][0]+70) and (mouse_pos[1] > card_positions[i][1] and mouse_pos[1] < card_positions[i][1]+100)\
                 and pygame.mouse.get_pressed()[0] == 1):    #Left click
             if (mouse_positions[i] == [-1,-1]):
                 mouse_positions[i] = mouse_pos
