@@ -35,7 +35,11 @@ while flag == 0:
         open_deck.append(card)
         flag = 1
 
-for i in range(13):
+player_cards.append('2_of_spades')
+player_cards.append('3_of_spades')
+player_cards.append('4_of_spades')
+player_cards.append('5_of_spades')
+for i in range(9):
     flag = 0
     while flag == 0:
         num = random.randint(1,13)
@@ -164,6 +168,67 @@ def cpu_play():
     open_deck_img = pygame.image.load(open_deck[-1]+".png").convert()   #load background image
     open_deck_img = pygame.transform.scale(open_deck_img,(70,100))  #scale background image
 
+def declare():
+    final = {}
+    final['spades'] = []
+    final['hearts'] = []
+    final['clubs'] = []
+    final['diamonds'] = []
+    for i in player_cards:
+        number = int(i.split('_')[0])
+        suit = i.split('_')[2]
+        final[suit].append(number)
+
+    final['spades'].sort()
+    final['hearts'].sort()
+    final['clubs'].sort()
+    final['diamonds'].sort()
+
+    count = 0
+    ace_count = 0
+    for i in range(1,14):
+        if i in final['spades']:
+            count+=1
+        if i in final['hearts']:
+            count+=1
+        if i in final['clubs']:
+            count+=1
+        if i in final['diamonds']:
+            count+=1
+        
+        if count >= 3:
+            ace_count += 1
+            if i in final['spades']:
+                final['spades'].remove(i)
+            if i in final['hearts']:
+                final['hearts'].remove(i)
+            if i in final['clubs']:
+                final['clubs'].remove(i)
+            if i in final['diamonds']:
+                final['diamonds'].remove(i)
+        
+        count = 0
+
+    continuous = 0
+    final['spades'].sort()
+    final['hearts'].sort()
+    final['clubs'].sort()
+    final['diamonds'].sort()
+    for suit in suitlist:
+        count = 0
+        for i in range(2,14):
+            if i in final[suit]:
+                count += 1
+            else:
+                if count >= 3:
+                    continuous += 1
+                count = 0
+
+    print("Ace count: ",ace_count)
+    print("Continuous count:", continuous)
+            
+
+
 cpu_chance = 0
 while True: # main game loop
     for event in pygame.event.get():
@@ -193,6 +258,13 @@ while True: # main game loop
                     and update_card_pos == 0):    #Left click
         add_card_frm_open_deck()
         add_card_status = 1
+    
+    # Declare
+    if ((mouse_pos[0] > 900 and mouse_pos[0] < 970) and (mouse_pos[1] > 200 and mouse_pos[1] < 300)\
+                and pygame.mouse.get_pressed()[0] == 1 and add_card_status == 0\
+                    and update_card_pos == 0):    #Left click
+        declare()
+        sys.exit()
     
     # Delete card positions
     if (add_card_status == 1 and pygame.mouse.get_pressed()[0] == 1 and update_card_pos == 0):
